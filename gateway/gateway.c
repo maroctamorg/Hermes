@@ -42,7 +42,7 @@ int main() {
     hints.ai_flags = AI_PASSIVE;
 
     struct addrinfo *bind_address;
-    getaddrinfo(0, "8080", &hints, &bind_address);
+    getaddrinfo(0, "3650", &hints, &bind_address);
 
 
     printf("Creating socket...\n");
@@ -63,7 +63,7 @@ int main() {
     freeaddrinfo(bind_address);
 
 
-    printf("Listening...\n");
+    printf("Listening on PORT 3650...\n");
     if (listen(socket_listen, 10) < 0) {
         fprintf(stderr, "listen() failed. (%d)\n", GETSOCKETERRNO());
         return 1;
