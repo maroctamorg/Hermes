@@ -16,8 +16,8 @@
  * =====================================================================================
  */
 
-#include "networking/network-include.h"
-#include "networking/portable-macros.h"
+#include "../networking/network-include.h"
+#include "../networking/portable-macros.h"
 
 #include <stdlib.h>
 #include <stdio.h>
