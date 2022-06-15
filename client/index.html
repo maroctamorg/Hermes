@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+	<header>
+		<meta charset=utf-8>
+		<title>Hermes</title>
+	</header>
+	<style>
+		body {
+			background-color: #00394d;
+		}
+		.center {
+			 display: flex;
+			 justify-content: center;
+			 align-items: center;
+		}
+	</style>
+	<script>
+		function abc() {
+			document.getElementById("container").style = "display: none;";
+			var xhr = new XMLHttpRequest();
+			xhr.open("POST", '/service', true);
+
+			//Send the proper header information along with the request
+			xhr.setRequestHeader("Content-Type", "text/plain");
+
+			xhr.onreadystatechange = function() { // Call a function when the state changes.
+				if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+					// Request finished. Do processing here.
+					console.log("sucess... redirecting...");
+					document.getElementById("demo").innerHTML = "loading service...";
+					document.getElementById("kavita").style = "display: none;";
+					document.getElementById("header").style = "display: none;";
+					document.getElementById("container").style = "";
+					window.location = "https://kavita.oncoto.app"
+				}
+			}
+			xhr.send("s");
+		}
+	</script>
+	<body>
+		<div class="container" id="container">
+			<h1 id="header" class="center">SELECT A SERVICE</h1>
+			<div id="kavita" class="center" onclick="abc()">
+				<img src='https://icons.iconarchive.com/icons/iconarchive/red-orb-alphabet/256/Letter-K-icon.png'>
+			</div>
+			<p id="demo" class="center"></p>
+		</div>
+	</body>
+</html>
