@@ -27,6 +27,7 @@
 #include <signal.h>
 
 typedef struct {
+	int start;
 	int state;
 } stimer_t;
 
@@ -35,13 +36,13 @@ int gettime() {
 }
 
 int updtimer(stimer_t* timer) {
-	int diff = gettime() - timer->state;
-	timer->state = timer->state + diff;
+	timer->state = gettime() - timer->start;
 
-	return diff;
+	return timer->state;
 }
 
 void resettimer(stimer_t* timer) {
+	timer->start = gettime();
 	timer->state = 0;
 }
 
@@ -126,17 +127,17 @@ int main() {
 	setsockopt(socket_client, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 	#endif
    
-	char* ssh_args[5] = {"-o", "\"ServerAliveInterval 300\"", "-fNR", "5000:localhost:5000", "oncoto@oncoto.app"};
+	char* ssh_args[5] = {"-o", "\"ServerAliveInterval=300\"", "-fNR", "5000:localhost:5000", "oncoto@oncoto.app"};
 
 	stimer_t timer;
 	resettimer(&timer);
 	int cpid = -1;
-	int tunnel = 1;
+	int tunnel = 0;
 	while(1) {
 		if(tunnel) updtimer(&timer);
-		if(timer.state > 600) {
+		if(timer.state > 20) {
 			kill(cpid, SIGKILL);
-			tunnel = 1;
+			tunnel = 0;
 		}
 
 		// ACCEPT INCOMING CONNECTION ATTEMPTS
@@ -148,7 +149,7 @@ int main() {
 	    if (!ISVALIDSOCKET(socket_client)) {
 	        fprintf(stderr, "accept() failed. (%d)\n",
 	                GETSOCKETERRNO());
-	        return 1;
+	        break;
 	    }
 
         char address_buffer[100];
@@ -158,7 +159,7 @@ int main() {
                 NI_NUMERICHOST);
         printf("New connection from %s\n", address_buffer);
 
-		if(strcmp(gateway_address, address_buffer)) {
+		if(!strcmp(gateway_address, address_buffer)) {
 			printf("Reading incoming byte\n");
 			char read;
         	char bytes_received = recv(socket_client, &read, 1, 0);
@@ -167,12 +168,13 @@ int main() {
 				if(tunnel) {
 					resettimer(&timer);
 				} else {
-					cpid = fork();
-					tunnel = 0;
+					tunnel = 1;
 					resettimer(&timer);
 					printf("establishing tunnel...\n");
+					cpid = fork();
 					if(cpid == 0) {
-						execv("/usr/bin/ssh", ssh_args);
+						printf("/usr/bin/ssh %s %s %s %s %s\n", "-o", "\"ServerAliveInterval=300\"", "-fNR", "5000:localhost:5000", "oncoto@oncoto.app");
+						system("ssh -o \"ServerAliveInterval=300\" -fNR 5000:localhost:5000 oncoto@oncoto.app");
 					}
 				}
 				send(socket_client, "s", 1, 0);
@@ -185,7 +187,7 @@ int main() {
 
 	if(tunnel) {
 		kill(cpid, SIGKILL);
-		tunnel = 1;
+		tunnel = 0;
 	}
 
     printf("Closing listening socket...\n");

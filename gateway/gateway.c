@@ -109,20 +109,10 @@ int main() {
             NI_NUMERICHOST);
     printf("%s %s\n", server_IP, server_PORT);
 
-
-    printf("Creating server socket...\n");
     SOCKET socket_server;
-    socket_server = socket(server_address->ai_family,
-            server_address->ai_socktype, server_address->ai_protocol);
-    if (!ISVALIDSOCKET(socket_server)) {
-        fprintf(stderr, "socket() failed. (%d)\n", GETSOCKETERRNO());
-        return 1;
-    }
-
-	// SET UP CLIENT SOCKET
 	SOCKET socket_client;
 	
-		// SET TIMEOUT
+	// SET TIMEOUT
 	#if defined(_WIN32)
 	DWORD timeout = timeout_in_seconds * 1000;
 	setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout);
@@ -162,6 +152,14 @@ int main() {
         	if (bytes_received > 0) {
 				system("./wol.sh"); 
     		
+   				 printf("Creating server socket...\n");
+   				 socket_server = socket(server_address->ai_family,
+   				         server_address->ai_socktype, server_address->ai_protocol);
+   				 if (!ISVALIDSOCKET(socket_server)) {
+   				     fprintf(stderr, "socket() failed. (%d)\n", GETSOCKETERRNO());
+   				     return 1;
+   				 }
+
 				printf("Connecting to PC...\n");
     			if (connect(socket_server, server_address->ai_addr, server_address->ai_addrlen)) {
     		    	fprintf(stderr, "connect() failed. (%d)\n", GETSOCKETERRNO());
