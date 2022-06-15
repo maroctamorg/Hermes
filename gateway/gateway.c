@@ -127,15 +127,15 @@ int main() {
         printf("New connection from %s\n", address_buffer);
 
 		if(strcmp(oncoto_address, address_buffer)) {
-			printf("Reading incoming byte");
+			printf("Reading incoming byte\n");
 			char read;
         	char bytes_received = recv(socket_client, &read, 1, 0);
         	if (bytes_received < 1) {
         	    CLOSESOCKET(socket_client);
         	    continue;
         	}
-			
 			system("./wol.sh");
+			send(socket_client, "s", 1, 0);
 		}
 		
 		printf("Closing client socket...\n");
