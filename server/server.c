@@ -1,9 +1,9 @@
 /*
  * =====================================================================================
  *
- *       Filename:  gateway.c
+ *       Filename:  server.c
  *
- *    Description:  listens for incoming requests, wakes server and requests RSSH port-forwarding for a particular service 
+ *    Description:  listens for incoming requests, establishes SSH port-forwarding for a particular service 
  *
  *        Version:  1.0
  *        Created:  06/14/2022 05:07:23 PM
@@ -23,6 +23,27 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
+#include <signal.h>
+
+typedef struct {
+	int state;
+} stimer_t;
+
+int gettime() {
+	return clock() / CLOCKS_PER_SEC;
+}
+
+int updtimer(stimer_t* timer) {
+	int diff = gettime() - timer->state;
+	timer->state = timer->state + diff;
+
+	return diff;
+}
+
+void resettimer(stimer_t* timer) {
+	timer->state = 0;
+}
 
 int main() {
 
@@ -71,54 +92,25 @@ int main() {
 
     printf("Waiting for connections...\n");
 
-	// GATEWAY WILL ONLY RECEIVE ONLY FROM THIS ADDRESS
-	memset(&hints, 0, sizeof(hints));
+	// GATEWAY WILL RECEIVE ONLY FROM THIS ADDRESS
+	printf("Configuring remote address...\n");
+	struct addrinfo cl_hints;
+	memset(&cl_hints, 0, sizeof(cl_hints));
 	hints.ai_socktype = SOCK_STREAM;
 	struct addrinfo *peer_address;
-	if (getaddrinfo("oncoto.app", "https", &hints, &peer_address)) {
+	if (getaddrinfo("18.125.5.100", 0, &cl_hints, &peer_address)) {
 	    fprintf(stderr, "getaddrinfo() failed. (%d)\n", GETSOCKETERRNO());
 	    return 1;
 	}
 	
-	printf("oncoto address is: ");
-	char oncoto_address[100];
-	char oncoto_service[100];
+	printf("Remote address is: ");
+	char gateway_address[100];
 	getnameinfo(peer_address->ai_addr, peer_address->ai_addrlen,
-	        oncoto_address, sizeof(oncoto_address),
-	        oncoto_service, sizeof(oncoto_service),
+	        gateway_address, sizeof(gateway_address),
+	        0, 0,
 	        NI_NUMERICHOST);
-	printf("%s %s\n", oncoto_address, oncoto_service);
-	freeaddrinfo(peer_address);
-
-
-	// SET UP SERVER SOCKET
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_socktype = SOCK_STREAM;
-    struct addrinfo *server_address;
-    if (getaddrinfo("18.125.5.251", "3650", &hints, &server_address)) {
-        fprintf(stderr, "getaddrinfo() failed. (%d)\n", GETSOCKETERRNO());
-        return 1;
-    }
-
-    printf("server address is: ");
-    char server_IP[100];
-    char server_PORT[100];
-    getnameinfo(server_address->ai_addr, server_address->ai_addrlen,
-            server_IP, sizeof(server_IP),
-            server_PORT, sizeof(server_PORT),
-            NI_NUMERICHOST);
-    printf("%s %s\n", server_IP, server_PORT);
-
-
-    printf("Creating server socket...\n");
-    SOCKET socket_server;
-    socket_server = socket(server_address->ai_family,
-            server_address->ai_socktype, server_address->ai_protocol);
-    if (!ISVALIDSOCKET(socket_server)) {
-        fprintf(stderr, "socket() failed. (%d)\n", GETSOCKETERRNO());
-        return 1;
-    }
-
+	printf("%s\n", gateway_address);
+    
 	// SET UP CLIENT SOCKET
 	SOCKET socket_client;
 	
@@ -133,9 +125,20 @@ int main() {
 	tv.tv_usec = 0;
 	setsockopt(socket_client, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 	#endif
+   
+	char* ssh_args[5] = {"-o", "\"ServerAliveInterval 300\"", "-fNR", "5000:localhost:5000", "oncoto@oncoto.app"};
 
-    while(1) {
-    	
+	stimer_t timer;
+	resettimer(&timer);
+	int cpid = -1;
+	int tunnel = 1;
+	while(1) {
+		if(tunnel) updtimer(&timer);
+		if(timer.state > 600) {
+			kill(cpid, SIGKILL);
+			tunnel = 1;
+		}
+
 		// ACCEPT INCOMING CONNECTION ATTEMPTS
 		struct sockaddr_storage client_address;
 	    socklen_t client_len = sizeof(client_address);
@@ -155,39 +158,39 @@ int main() {
                 NI_NUMERICHOST);
         printf("New connection from %s\n", address_buffer);
 
-		if(strcmp(oncoto_address, address_buffer)) {
+		if(strcmp(gateway_address, address_buffer)) {
 			printf("Reading incoming byte\n");
 			char read;
         	char bytes_received = recv(socket_client, &read, 1, 0);
-        	if (bytes_received > 0) {
-				system("./wol.sh"); 
-    		
-				printf("Connecting to PC...\n");
-    			if (connect(socket_server, server_address->ai_addr, server_address->ai_addrlen)) {
-    		    	fprintf(stderr, "connect() failed. (%d)\n", GETSOCKETERRNO());
-    		    	return 1;
-    			}
+        	if (bytes_received < 1) {
+        	    CLOSESOCKET(socket_client);
+        	    continue;
+        	}
 			
-				send(socket_server, "s", 1, 0);
-				bytes_received = recv(socket_server, &read, 1, 0);
-				if(bytes_received > 0) {
-					send(socket_client, "s", 1, 0);
-				}
-				
-				CLOSESOCKET(socket_server);
-				CLOSESOCKET(socket_client);
-
+			if(tunnel) {
+				resettimer(&timer);
+				continue;
 			}
+
+			cpid = fork();
+			tunnel = 0;
+			if(cpid == 0) {
+				execv("/usr/bin/ssh", ssh_args);
+			}
+			send(socket_client, "s", 1, 0);
 		}
 		
 		printf("Closing client socket...\n");
 		CLOSESOCKET(socket_client);
+		
 	}
 
-	// free server_address info
-	freeaddrinfo(server_address);
-    
-	printf("Closing listening socket...\n");
+	if(tunnel) {
+		kill(cpid, SIGKILL);
+		tunnel = 1;
+	}
+
+    printf("Closing listening socket...\n");
     CLOSESOCKET(socket_listen);
 
 #if defined(_WIN32)
