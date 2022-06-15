@@ -162,27 +162,25 @@ int main() {
 			printf("Reading incoming byte\n");
 			char read;
         	char bytes_received = recv(socket_client, &read, 1, 0);
-        	if (bytes_received < 1) {
-        	    CLOSESOCKET(socket_client);
-        	    continue;
-        	}
-			
-			if(tunnel) {
-				resettimer(&timer);
-				continue;
+        	
+			if (bytes_received > 0) {
+				if(tunnel) {
+					resettimer(&timer);
+				} else {
+					cpid = fork();
+					tunnel = 0;
+					resettimer(&timer);
+					printf("establishing tunnel...\n");
+					if(cpid == 0) {
+						execv("/usr/bin/ssh", ssh_args);
+					}
+				}
+				send(socket_client, "s", 1, 0);
 			}
-
-			cpid = fork();
-			tunnel = 0;
-			if(cpid == 0) {
-				execv("/usr/bin/ssh", ssh_args);
-			}
-			send(socket_client, "s", 1, 0);
 		}
 		
 		printf("Closing client socket...\n");
 		CLOSESOCKET(socket_client);
-		
 	}
 
 	if(tunnel) {

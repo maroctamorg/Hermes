@@ -145,7 +145,7 @@ int main() {
 	    if (!ISVALIDSOCKET(socket_client)) {
 	        fprintf(stderr, "accept() failed. (%d)\n",
 	                GETSOCKETERRNO());
-	        return 1;
+	        break;
 	    }
 
         char address_buffer[100];
@@ -165,7 +165,7 @@ int main() {
 				printf("Connecting to PC...\n");
     			if (connect(socket_server, server_address->ai_addr, server_address->ai_addrlen)) {
     		    	fprintf(stderr, "connect() failed. (%d)\n", GETSOCKETERRNO());
-    		    	return 1;
+    		    	break;
     			}
 			
 				send(socket_server, "s", 1, 0);
@@ -173,10 +173,9 @@ int main() {
 				if(bytes_received > 0) {
 					send(socket_client, "s", 1, 0);
 				}
-				
+			
+				printf("Closing server socket...\n");	
 				CLOSESOCKET(socket_server);
-				CLOSESOCKET(socket_client);
-
 			}
 		}
 		

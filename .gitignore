@@ -1,7 +1,11 @@
 .*
 !.gitignore
+*.swp
 *.o
 *.so
 *.lib
 *.a
 *.log
+
+gateway/gateway
+server/server
