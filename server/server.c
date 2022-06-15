@@ -25,11 +25,19 @@
 #include <ctype.h>
 #include <time.h>
 #include <signal.h>
+#include <pthread.h>
+#include <errno.h>
 
 typedef struct {
 	int start;
 	int state;
 } stimer_t;
+
+typedef struct {
+	int * cpid;
+	int * tunnel;
+	stimer_t* timer;
+} state_t;
 
 int gettime() {
 	return clock() / CLOCKS_PER_SEC;
@@ -44,6 +52,29 @@ int updtimer(stimer_t* timer) {
 void resettimer(stimer_t* timer) {
 	timer->start = gettime();
 	timer->state = 0;
+}
+
+void * timer_f(void * stt) {
+	state_t * state = (state_t *) stt;
+	
+	resettimer(state->timer);
+	while(1) {
+		
+		if( !*(state->tunnel) ) { 
+			sleep(20);
+			continue;
+		}
+
+		printf("timer: %d\n", updtimer(state->timer));
+		if(state->timer->state > 60) {
+			printf( "killing ssh tunnel, pid %d\n", *(state->cpid) );
+			kill( *(state->cpid), SIGKILL );
+			*(state->tunnel) = 0;
+			resettimer(state->timer);
+		}
+
+		sleep(10);
+	}
 }
 
 int main() {
@@ -127,18 +158,22 @@ int main() {
 	setsockopt(socket_client, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 	#endif
    
-	char* ssh_args[5] = {"-o", "\"ServerAliveInterval=300\"", "-fNR", "5000:localhost:5000", "oncoto@oncoto.app"};
+	char* ssh_args[6] = {"/usr/bin/ssh", "-o ServerAliveInterval=300", "-NR", "5000:localhost:5000", "oncoto@oncoto.app", NULL};
 
 	stimer_t timer;
 	resettimer(&timer);
 	int cpid = -1;
 	int tunnel = 0;
+	
+	state_t state;
+	state.cpid = &cpid;
+	state.tunnel = &tunnel;
+	state.timer = &timer;
+
+	pthread_t timer_thr;
+	int timer_thrid = pthread_create(&timer_thr, NULL, timer_f, (void *) &state);
+
 	while(1) {
-		if(tunnel) updtimer(&timer);
-		if(timer.state > 20) {
-			kill(cpid, SIGKILL);
-			tunnel = 0;
-		}
 
 		// ACCEPT INCOMING CONNECTION ATTEMPTS
 		struct sockaddr_storage client_address;
@@ -173,8 +208,12 @@ int main() {
 					printf("establishing tunnel...\n");
 					cpid = fork();
 					if(cpid == 0) {
-						printf("/usr/bin/ssh %s %s %s %s %s\n", "-o", "\"ServerAliveInterval=300\"", "-fNR", "5000:localhost:5000", "oncoto@oncoto.app");
-						system("ssh -o \"ServerAliveInterval=300\" -fNR 5000:localhost:5000 oncoto@oncoto.app");
+						printf("/usr/bin/ssh -o \"ServerAliveInterval=300\" -fNR 5000:localhost:5000 oncoto@oncoto.app\n");
+						if( execv("/usr/bin/ssh", ssh_args) == -1) {
+							printf("failed to establish ssh tunnel in child process... [%d]\n", errno);
+							return 1;
+						}
+						return 0;
 					}
 				}
 				send(socket_client, "s", 1, 0);
