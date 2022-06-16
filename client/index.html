@@ -27,8 +27,8 @@
 				if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
 					// Request finished. Do processing here.
 					console.log("sucess... redirecting...");
-					document.getElementById("demo").innerHTML = "redirecting...";
-					await new Promise(r => setTimeout(r, 5000));
+					document.getElementById("demo").innerHTML = "redirecting, please wait...";
+					await new Promise(r => setTimeout(r, 15000));
 					window.location = "https://kavita.oncoto.app"
 				}
 			}

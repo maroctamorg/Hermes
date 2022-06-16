@@ -11,7 +11,7 @@ def establishTunnel(service):
     with open("IPV4.txt", "r") as f:
         remoteHOST = f.readline()[:-1]
     
-    print(f"connecting to {remoteHOST}")
+    #print(f"connecting to {remoteHOST}")
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((remoteHOST, remotePORT))
         s.sendall(bytes(service, 'ascii'))
@@ -30,11 +30,11 @@ class MyServer(BaseHTTPRequestHandler):
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
         body = self.rfile.read(content_length)
-        print(body)
+        #print(body)
         self.send_response(200)
         self.end_headers()
         flag = establishTunnel("s")
-        print( ("sucessfully established" if flag else "failed to establish") + "tunnel" )
+        #print( ("sucessfully established" if flag else "failed to establish") + "tunnel" )
 
 if __name__ == "__main__":        
     webServer = HTTPServer((localHOST, serverPORT), MyServer)
