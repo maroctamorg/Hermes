@@ -165,7 +165,7 @@ int main() {
 				printf("Connecting to PC...\n");
     			if (connect(socket_server, server_address->ai_addr, server_address->ai_addrlen)) {
     		    	fprintf(stderr, "connect() failed. (%d)\n", GETSOCKETERRNO());
-    		    	break;
+    		    	continue;
     			}
 			
 				send(socket_server, "s", 1, 0);

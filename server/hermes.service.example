@@ -1,0 +1,16 @@
+Below is an example systemd config file for the hermes service running on your local server. Add this file to `/etc/systemd/system/hermes.service`. If you encounter issues with resolving the domain of your remote server (see `systemctl status hermes.service`, then ensure systemd-resolver is running.
+
+
+[Unit]
+Description=exposes local network services to remote upon request
+
+[Service]
+User=
+WorkingDirectory=
+ExecStart=
+Restart=always
+StandardOutput=syslog+console
+StandardError=syslog+console
+
+[Install]
+WantedBy=multi-user.target

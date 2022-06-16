@@ -63,7 +63,7 @@ void * timer_f(void * stt) {
 	resettimer(state->timer);
 	while(1) {
 		
-		*(state->tunnel) = kill( *(state->cpid), 0 ) == -1 ? 0 : 1;
+		//*(state->tunnel) = kill( *(state->cpid), 0 ) == -1 ? 0 : 1;
 		if( !*(state->tunnel) ) { 
 			sleep(60);
 			continue;
@@ -204,7 +204,6 @@ int main() {
         	char bytes_received = recv(socket_client, &read, 1, 0);
         	
 			if (bytes_received > 0) {
-				tunnel = kill(cpid, 0) == -1 ? 0 : 1;
 				if(tunnel) {
 					resettimer(&timer);
 				} else {
