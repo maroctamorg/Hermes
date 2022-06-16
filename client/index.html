@@ -15,7 +15,7 @@
 		}
 	</style>
 	<script>
-		function abc() {
+		function post_choice(choice) {
 			document.getElementById("container").style = "display: none;";
 			var xhr = new XMLHttpRequest();
 			xhr.open("POST", '/service', true);
@@ -27,23 +27,22 @@
 				if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
 					// Request finished. Do processing here.
 					console.log("sucess... redirecting...");
-					document.getElementById("demo").innerHTML = "loading service...";
-					document.getElementById("kavita").style = "display: none;";
-					document.getElementById("header").style = "display: none;";
-					document.getElementById("container").style = "";
-					await new Promise(r => setTimeout(r, 2000));
 					document.getElementById("demo").innerHTML = "redirecting...";
 					await new Promise(r => setTimeout(r, 2000));
 					window.location = "https://kavita.oncoto.app"
 				}
 			}
-			xhr.send("s");
+			xhr.send(choice);
+			document.getElementById("demo").innerHTML = "loading service...";
+			document.getElementById("kavita").style = "display: none;";
+			document.getElementById("header").style = "display: none;";
+			document.getElementById("container").style = "";
 		}
 	</script>
 	<body>
 		<div class="container" id="container">
 			<h1 id="header" class="center">SELECT A SERVICE</h1>
-			<div id="kavita" class="center" onclick="abc()">
+			<div id="kavita" class="center" onclick="post_choice('s')">
 				<img src='https://icons.iconarchive.com/icons/iconarchive/red-orb-alphabet/256/Letter-K-icon.png'>
 			</div>
 			<p id="demo" class="center"></p>
