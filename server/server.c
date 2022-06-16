@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/time.h>
 #include <time.h>
 #include <signal.h>
 #include <pthread.h>
@@ -40,7 +41,9 @@ typedef struct {
 } state_t;
 
 int gettime() {
-	return clock() / CLOCKS_PER_SEC;
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return tv.tv_sec;
 }
 
 int updtimer(stimer_t* timer) {
@@ -66,7 +69,7 @@ void * timer_f(void * stt) {
 		}
 
 		printf("timer: %d\n", updtimer(state->timer));
-		if(state->timer->state > 60) {
+		if(state->timer->state > 30) {
 			printf( "killing ssh tunnel, pid %d\n", *(state->cpid) );
 			kill( *(state->cpid), SIGKILL );
 			*(state->tunnel) = 0;

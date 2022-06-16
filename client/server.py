@@ -2,12 +2,16 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import socket
 import time
 
-localHOST   = "localHOST"
-remoteHOST  = "192.168.1.65"
+localHOST   = "localhost"
 serverPORT  = 8080
 remotePORT  = 3650
 
 def establishTunnel(service):
+    remoteHOST = ""
+    with open("IPV4", "r") as f:
+        remoteHOST = f.read()
+    
+    print(f"connecting to {remoteHOST}")
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((remoteHOST, remotePORT))
         s.sendall(bytes(service, 'ascii'))
