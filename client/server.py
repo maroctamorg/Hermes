@@ -31,9 +31,10 @@ class MyServer(BaseHTTPRequestHandler):
         content_length = int(self.headers['Content-Length'])
         body = self.rfile.read(content_length)
         print(body)
-        flag = establishTunnel("s")
-        self.send_response(200 if flag else 400)
+        self.send_response(200)
         self.end_headers()
+        flag = establishTunnel("s")
+        print( ("sucessfully established" if flag else "failed to establish") + "tunnel" )
 
 if __name__ == "__main__":        
     webServer = HTTPServer((localHOST, serverPORT), MyServer)
