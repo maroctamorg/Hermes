@@ -70,7 +70,7 @@ void * timer_f(void * stt) {
 		}
 
 		printf("timer: %d\n", updtimer(state->timer));
-		if(state->timer->state > 3600) {
+		if(state->timer->state > 1800) {
 			printf( "killing ssh tunnel, pid %d\n", *(state->cpid) );
 			kill( *(state->cpid), SIGKILL );
 			*(state->tunnel) = 0;
