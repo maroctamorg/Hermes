@@ -8,8 +8,8 @@ remotePORT  = 3650
 
 def establishTunnel(service):
     remoteHOST = ""
-    with open("IPV4", "r") as f:
-        remoteHOST = f.read()
+    with open("IPV4.txt", "r") as f:
+        remoteHOST = f.readline()[:-1]
     
     print(f"connecting to {remoteHOST}")
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:

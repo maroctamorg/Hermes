@@ -64,19 +64,19 @@ void * timer_f(void * stt) {
 	while(1) {
 		
 		if( !*(state->tunnel) ) { 
-			sleep(20);
+			sleep(60);
 			continue;
 		}
 
 		printf("timer: %d\n", updtimer(state->timer));
-		if(state->timer->state > 30) {
+		if(state->timer->state > 3600) {
 			printf( "killing ssh tunnel, pid %d\n", *(state->cpid) );
 			kill( *(state->cpid), SIGKILL );
 			*(state->tunnel) = 0;
 			resettimer(state->timer);
 		}
 
-		sleep(10);
+		sleep(60);
 	}
 }
 
