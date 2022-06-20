@@ -26,7 +26,7 @@
 			xhr.onreadystatechange = async function() { // Call a function when the state changes.
 				if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
 					// Request finished. Do processing here.
-					console.log("sucess... redirecting...");
+					console.log("Success! Redirecting...");
 					document.getElementById("demo").innerHTML = "redirecting, please wait...";
 					await new Promise(r => setTimeout(r, 15000));
 					window.location = "https://kavita.oncoto.app"
@@ -43,7 +43,42 @@
 		<div class="container" id="container">
 			<h1 id="header" class="center">SELECT A SERVICE</h1>
 			<div id="kavita" class="center" onclick="post_choice('s')">
-				<img src='https://icons.iconarchive.com/icons/iconarchive/red-orb-alphabet/256/Letter-K-icon.png'>
+				<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+				<svg
+					width="150px"
+					height="150px"
+					version="1.1"
+					id="kavita"
+					<g 
+						id="layer1">
+						<rect
+							 style="fill:none;stroke-width:0.264999;stroke-linejoin:round"
+							 id="rect111"/>
+						<g
+							 aria-label="K"
+							 transform="matrix(4.4813101,0,0,4.4202393,188.47934,-537.65423)"
+							 id="text44"
+							 style="font-size:10.5833px;line-height:1.25;font-family:sans-serif;white-space:pre;fill:#ffffff">
+							<g
+								 id="g373">
+								<path
+									 id="rect19"
+									 style="fill:#ff5555;stroke-width:0.225006;stroke-linejoin:round"
+									 transform="matrix(0.21274,0.06828925,0,0.22623209,-42.058982,121.63464)"
+									 d="M 6.8156733e-6,-7.0920032e-6 H 68.18035 V 109.41943 H 6.8156733e-6 Z" />
+								<path
+									 id="rect19-4"
+									 style="fill:#ff0000;stroke-width:0.225006;stroke-linejoin:round"
+									 transform="matrix(-0.21274,0.06828925,0,0.22623209,-42.058982,121.63464)"
+									 d="m -136.36069,41.161137 h 68.180346 V 150.58057 h -68.180346 z" />
+								<path
+									 d="m -29.774003,127.74765 v 18.01446 h -3.569026 v -18.01446 z m 5.926666,18.01446 -5.79641,-9.61292 5.67918,-8.40154 h 3.829538 l -5.783385,8.14102 6.278359,9.87344 z"
+									 style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:25.4px;font-family:'Fira Code';fill:#ffffff"
+									 id="path74" />
+							</g>
+						</g>
+					</g>
+				</svg>
 			</div>
 			<p id="demo" class="center"></p>
 		</div>
