@@ -35,7 +35,6 @@ void * timer_f(void * stt) {
 	resettimer(state->timer);
 	while(1) {
 		
-		//*(state->tunnel) = kill( *(state->cpid), 0 ) == -1 ? 0 : 1;
 		if( !*(state->tunnel) ) { 
 			sleep(60);
 			continue;
@@ -49,7 +48,7 @@ void * timer_f(void * stt) {
 			resettimer(state->timer);
 		}
 
-		sleep(60);
+		sleep(1800);
 	}
 }
 
@@ -97,31 +96,30 @@ int main() {
 
 		// ACCEPT INCOMING CONNECTION ATTEMPTS
 		struct sockaddr_storage client_address;
-	    socklen_t client_len = sizeof(client_address);
-	    socket_client = accept(socket_listen,
+		socklen_t client_len = sizeof(client_address);
+		socket_client = accept(socket_listen,
 	            (struct sockaddr*) &client_address,
 	            &client_len);
-	    if (!ISVALIDSOCKET(socket_client)) {
-	        fprintf(stderr, "accept() failed. (%d)\n",
-	                GETSOCKETERRNO());
+		if (!ISVALIDSOCKET(socket_client)) {
+			fprintf(stderr, "accept() failed. (%d)\n", GETSOCKETERRNO());
 	        break;
-	    }
-
-        char address_buffer[100];
-        getnameinfo((struct sockaddr*)&client_address,
-                client_len,
-                address_buffer, sizeof(address_buffer), 0, 0,
-                NI_NUMERICHOST);
-        printf("New connection from %s\n", address_buffer);
-
+		}
+		
+		char address_buffer[100];
+		getnameinfo((struct sockaddr*)&client_address,
+		        client_len,
+		        address_buffer, sizeof(address_buffer), 0, 0,
+		        NI_NUMERICHOST);
+		printf("New connection from %s\n", address_buffer);
+		
 		if(strcmp(gateway_address, address_buffer)) {
 			CLOSESOCKET(socket_client);
 			continue;
 		}
-
+		
 		char read;
-        int bytes_received = recv(socket_client, &read, 1, 0);
-        
+		int bytes_received = recv(socket_client, &read, 1, 0);
+		
 		if (bytes_received > 0) {
 			if(tunnel) {
 				resettimer(&timer);
