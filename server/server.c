@@ -16,46 +16,18 @@
  * =====================================================================================
  */
 
-#include "../networking/network-include.h"
-#include "../networking/portable-macros.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <sys/time.h>
-#include <time.h>
 #include <signal.h>
 #include <pthread.h>
 #include <errno.h>
+#include <time.h>
 
-typedef struct {
-	int start;
-	int state;
-} stimer_t;
-
-typedef struct {
-	int * cpid;
-	int * tunnel;
-	stimer_t* timer;
-} state_t;
-
-int gettime() {
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	return tv.tv_sec;
-}
-
-int updtimer(stimer_t* timer) {
-	timer->state = gettime() - timer->start;
-
-	return timer->state;
-}
-
-void resettimer(stimer_t* timer) {
-	timer->start = gettime();
-	timer->state = 0;
-}
+#include "../utils/timer.h"
+#include "../networking/network-basics.h"
 
 void * timer_f(void * stt) {
 	state_t * state = (state_t *) stt;
@@ -83,44 +55,15 @@ void * timer_f(void * stt) {
 
 int main() {
 
-#if defined(_WIN32)
-    WSADATA d;
-    if (WSAStartup(MAKEWORD(2, 2), &d)) {
-        fprintf(stderr, "Failed to initialize.\n");
-        return 1;
-    }
-#endif
+	INITSOCKET();
 
-    printf("Configuring local address...\n");
-    struct addrinfo hints;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
-
-    struct addrinfo *bind_address;
-    getaddrinfo(0, "3650", &hints, &bind_address);
-
-
-    printf("Creating socket...\n");
     SOCKET socket_listen;
-    socket_listen = socket(bind_address->ai_family,
-            bind_address->ai_socktype, bind_address->ai_protocol);
-    if (!ISVALIDSOCKET(socket_listen)) {
-        fprintf(stderr, "socket() failed. (%d)\n", GETSOCKETERRNO());
+    if (!get_sock(&socket_listen, "3650", 0, 0, 0)) {
+        fprintf(stderr, "get_sock() failed. (%d)\n", GETSOCKETERRNO());
         return 1;
     }
 
-	printf("Binding socket to local address...\n");
-    if (bind(socket_listen,
-                bind_address->ai_addr, bind_address->ai_addrlen)) {
-        fprintf(stderr, "bind() failed. (%d)\n", GETSOCKETERRNO());
-        return 1;
-    }
-    freeaddrinfo(bind_address);
-
-
-    printf("Listening on PORT 3650...\n");
+    printf("listening on PORT 3650...\n");
     if (listen(socket_listen, 10) < 0) {
         fprintf(stderr, "listen() failed. (%d)\n", GETSOCKETERRNO());
         return 1;
@@ -128,39 +71,12 @@ int main() {
 
     printf("Waiting for connections...\n");
 
-	// GATEWAY WILL RECEIVE ONLY FROM THIS ADDRESS
-	printf("Configuring remote address...\n");
-	struct addrinfo cl_hints;
-	memset(&cl_hints, 0, sizeof(cl_hints));
-	hints.ai_socktype = SOCK_STREAM;
-	struct addrinfo *peer_address;
-	if (getaddrinfo("18.125.5.100", 0, &cl_hints, &peer_address)) {
-	    fprintf(stderr, "getaddrinfo() failed. (%d)\n", GETSOCKETERRNO());
-	    return 1;
-	}
-	
-	printf("Remote address is: ");
-	char gateway_address[100];
-	getnameinfo(peer_address->ai_addr, peer_address->ai_addrlen,
-	        gateway_address, sizeof(gateway_address),
-	        0, 0,
-	        NI_NUMERICHOST);
-	printf("%s\n", gateway_address);
+	// SERVER WILL RECEIVE ONLY FROM THIS ADDRESS
+	char * gateway_address = "18.125.5.100";
+	printf("Remote address is: %s\n", gateway_address);
     
-	// SET UP CLIENT SOCKET
 	SOCKET socket_client;
-	
-		// SET TIMEOUT
-	#if defined(_WIN32)
-	DWORD timeout = timeout_in_seconds * 1000;
-	setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout);
-	#else 
-	int timeout_in_seconds = 10;
-	struct timeval tv;
-	tv.tv_sec = timeout_in_seconds;
-	tv.tv_usec = 0;
-	setsockopt(socket_client, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
-	#endif
+	set_sock_timeout(socket_client, 10, 0, 0);	
    
 	char* ssh_args[6] = {"/usr/bin/ssh", "-o ServerAliveInterval=300", "-NR", "5000:localhost:5000", "oncoto@oncoto.app", NULL};
 
@@ -198,33 +114,33 @@ int main() {
                 NI_NUMERICHOST);
         printf("New connection from %s\n", address_buffer);
 
-		if(!strcmp(gateway_address, address_buffer)) {
-			printf("Reading incoming byte\n");
-			char read;
-        	char bytes_received = recv(socket_client, &read, 1, 0);
-        	
-			if (bytes_received > 0) {
-				if(tunnel) {
-					resettimer(&timer);
-				} else {
-					tunnel = 1;
-					resettimer(&timer);
-					printf("establishing tunnel...\n");
-					cpid = fork();
-					if(cpid == 0) {
-						printf("/usr/bin/ssh -o \"ServerAliveInterval=300\" -fNR 5000:localhost:5000 oncoto@oncoto.app\n");
-						if( execv("/usr/bin/ssh", ssh_args) == -1) {
-							printf("failed to establish ssh tunnel in child process... [%d]\n", errno);
-							return 1;
-						}
-						return 0;
+		if(strcmp(gateway_address, address_buffer)) {
+			CLOSESOCKET(socket_client);
+			continue;
+		}
+
+		char read;
+        int bytes_received = recv(socket_client, &read, 1, 0);
+        
+		if (bytes_received > 0) {
+			if(tunnel) {
+				resettimer(&timer);
+			} else {
+				tunnel = 1;
+				resettimer(&timer);
+				cpid = fork();
+				if(cpid == 0) {
+					printf("/usr/bin/ssh -o \"ServerAliveInterval=300\" -fNR 5000:localhost:5000 oncoto@oncoto.app\n");
+					if( execv("/usr/bin/ssh", ssh_args) == -1) {
+						fprintf(stderr, "failed to establish ssh tunnel in child process... [%d]\n", errno);
+						return 1;
 					}
+					return 0;
 				}
-				send(socket_client, "s", 1, 0);
 			}
+			send(socket_client, "s", 1, 0);
 		}
 		
-		printf("Closing client socket...\n");
 		CLOSESOCKET(socket_client);
 	}
 
@@ -233,16 +149,8 @@ int main() {
 		tunnel = 0;
 	}
 
-    printf("Closing listening socket...\n");
     CLOSESOCKET(socket_listen);
-
-#if defined(_WIN32)
-    WSACleanup();
-#endif
-
-
-    printf("Finished.\n");
+	DESTROYSOCKET();
 
     return 0;
 }
-
