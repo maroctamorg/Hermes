@@ -88,7 +88,7 @@ int main() {
                 NI_NUMERICHOST);
         printf("New connection from %s\n", address_buffer);
 
-		if(!strcmp(oncoto_address, address_buffer)) {
+		if(strcmp(oncoto_address, address_buffer)) {
 			CLOSESOCKET(socket_client);
 			continue;
 		}
@@ -106,12 +106,13 @@ int main() {
 			}
 
 			sleep(5);
-			int flag = 0;	
-		   	for(int counter = 0; counter < 5; counter++) {
-				flag = connect(socket_server, server_address->ai_addr, server_address->ai_addrlen);
+			int counter = 0;	
+		   	while(counter < 5) {
+				if( connect(socket_server, server_address->ai_addr, server_address->ai_addrlen) == 0) break;
+				counter++;
 				sleep(2);
 			}
-    	    if (flag) { 
+    	    if (counter == 5) { 
 				fprintf(stderr, "connect() failed. (%d)\n", GETSOCKETERRNO());
 				continue;
 			}
