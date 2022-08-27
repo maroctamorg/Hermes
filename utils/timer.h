@@ -24,12 +24,6 @@ typedef struct {
 	int state;
 } stimer_t;
 
-typedef struct {
-	int * cpid;
-	int * tunnel;
-	stimer_t* timer;
-} state_t;
-
 int gettime();
 
 int updtimer(stimer_t* timer);

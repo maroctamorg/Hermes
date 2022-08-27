@@ -21,6 +21,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <pthread.h>
 #include <errno.h>
@@ -29,14 +31,21 @@
 #include "../utils/timer.h"
 #include "../networking/network-basics.h"
 
+typedef struct {
+	int status;
+	int * cpid;
+	stimer_t* timer;
+} state_t;
+
+
 void * timer_f(void * stt) {
 	state_t * state = (state_t *) stt;
 	
 	resettimer(state->timer);
 	while(1) {
 		
-		if( !*(state->tunnel) ) { 
-			sleep(60);
+		if( waitpid(*(state->cpid), &(state->status), WNOHANG) != 0 ) { 
+			sleep(1800);
 			continue;
 		}
 
@@ -44,7 +53,6 @@ void * timer_f(void * stt) {
 		if(state->timer->state > 1800) {
 			printf( "killing ssh tunnel, pid %d\n", *(state->cpid) );
 			kill( *(state->cpid), SIGKILL );
-			*(state->tunnel) = 0;
 			resettimer(state->timer);
 		}
 
@@ -82,15 +90,13 @@ int main() {
 	stimer_t timer;
 	resettimer(&timer);
 	int cpid = -1;
-	int tunnel = 0;
 	
 	state_t state;
 	state.cpid = &cpid;
-	state.tunnel = &tunnel;
 	state.timer = &timer;
 
 	pthread_t timer_thr;
-	int timer_thrid = pthread_create(&timer_thr, NULL, timer_f, (void *) &state);
+	int timer_thrd = pthread_create(&timer_thr, NULL, timer_f, (void *) &state);
 
 	while(1) {
 
@@ -121,30 +127,28 @@ int main() {
 		int bytes_received = recv(socket_client, &read, 1, 0);
 		
 		if (bytes_received > 0) {
-			if(tunnel) {
-				resettimer(&timer);
-			} else {
-				tunnel = 1;
-				resettimer(&timer);
-				cpid = fork();
-				if(cpid == 0) {
-					printf("/usr/bin/ssh -o \"ServerAliveInterval=300\" -fNR 5000:localhost:5000 oncoto@oncoto.app\n");
-					if( execv("/usr/bin/ssh", ssh_args) == -1) {
-						fprintf(stderr, "failed to establish ssh tunnel in child process... [%d]\n", errno);
-						return 1;
-					}
-					return 0;
-				}
+			resettimer(&timer);
+			if(waitpid(cpid, &(state.status), WNOHANG) == 0) {
+				send(socket_client, "s", 1, 0);
+				CLOSESOCKET(socket_client);	
+				continue;
 			}
-			send(socket_client, "s", 1, 0);
+			cpid = fork();
+			if(cpid == 0) {
+				printf("/usr/bin/ssh -o \"ServerAliveInterval=300\" -fNR 5000:localhost:5000 oncoto@oncoto.app\n");
+				if( execv("/usr/bin/ssh", ssh_args) == -1) {
+					fprintf(stderr, "failed to establish ssh tunnel in child process... [%d]\n", errno);
+					return 1;
+				}
+				return 0;
+			}
 		}
 		
 		CLOSESOCKET(socket_client);
 	}
 
-	if(tunnel) {
+	if(waitpid(cpid, &(state.status), WNOHANG) == 0) {
 		kill(cpid, SIGKILL);
-		tunnel = 0;
 	}
 
     CLOSESOCKET(socket_listen);

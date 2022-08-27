@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Hermes Remote Gateway</title>
+		<link rel="stylesheet" href="/css/styles.css"/>
+		<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+		<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+		<link rel="manifest" href="/site.webmanifest">
+		<link rel="shortcut icon" href="/favicon.ico">
+		<link rel="icon" href="/favicon.ico">
+		<link rel="preconnect" href="https://fonts.googleapis.com"> 
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+		<link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+	</head>
+	<header>
+		<div class="nav">
+			<h1 id="header" class="center">Hermes Remote Gateway</h1>
+		</div>
+	</header>
+	<body>
+		<div class="container" id="container">
+			<div class="center">
+				<button id="kavita" onclick="post_choice('kavita')">
+				<svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 130">
+					<g id="layer1">
+						<rect style="fill:none;stroke:none;stroke-linejoin='round'" id="rect111"/>
+						<g aria-label="K" transform="matrix(4.4813101,0,0,4.4202393,188.47934,-537.65423)" id="text44" style="font-size:10.5833px;line-height:1.25;font-family:sans-serif;white-space:pre;fill:#ffffff">
+							<g id="g373">
+								<path id="rect19" style="fill:#ff5555;stroke:#ff5555;stroke-linejoin='round'" transform="matrix(0.21274,0.06828925,0,0.22623209,-42.058982,121.63464)" d="M 6.8156733e-6,-7.0920032e-6 H 68.18035 V 109.41943 H 6.8156733e-6 Z" />
+								<path id="rect19-4" style="fill:#ff0000;stroke:#ff0000;stroke-linejoin='round'" transform="matrix(-0.21274,0.06828925,0,0.22623209,-42.058982,121.63464)" d="m -136.36069,41.161137 h 68.180346 V 150.58057 h -68.180346 z" />
+								<path id="path74" style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:25.4px;font-family:'Fira Code';fill:#ffffff" d="m -29.774003,127.74765 v 18.01446 h -3.569026 v -18.01446 z m 5.926666,18.01446 -5.79641,-9.61292 5.67918,-8.40154 h 3.829538 l -5.783385,8.14102 6.278359,9.87344 z" />
+							</g>
+						</g>
+					</g>
+				</svg>
+				</button>
+				<button id="plex" onclick="post_choice('plex')">
+				<svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 70">
+					<defs>
+					<radialGradient id="A" cx="1244.322" cy="919.871" r=".925" gradientTransform="matrix(30.05255,0,0,-49.291108,-37348.37,45373.334)" gradientUnits="userSpaceOnUse">
+						<stop offset="0" stop-color="#f9be03"/>
+						<stop offset="1" stop-color="#cc7c19"/>
+					</radialGradient>
+					</defs>
+					<path d="M64 52.8C64 59 59 64 52.8 64H11.2C5 64 0 59 0 52.8V11.2C0 5 5 0 11.2 0h41.6C59 0 64 5 64 11.2z" fill="#494949"/>
+					<path d="M19.885 7.354h14.287L49.937 32 34.172 56.646H19.885L35.65 32 19.885 7.354" fill="url(#A)"/>
+				</svg>
+				</button>
+				<button id="alexandria" onclick="post_choice('alexandria')">
+					<img class="logo" src="https://res.oncoto.app/alexandria_icon.webp">
+				</button>
+			</div>
+			<p id="status" class="center"></p>
+		</div>
+	</body>
+	<script src="/js/gateway.js"></script>
+</html>
