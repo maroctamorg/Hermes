@@ -23,8 +23,6 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/reboot.h>
-#include <linux/reboot.h>
 #include <signal.h>
 #include <pthread.h>
 #include <errno.h>
@@ -41,9 +39,8 @@ typedef struct {
 	stimer_t* timer;
 } state_t;
 
-int open_service(state_t * state, int rport, int lport) {
-	if(*(state->cpid) != -1 && waitpid(*(state->cpid), &(state->status), WNOHANG) == 0) {
-		printf("child process %d is already running\n", *(state->cpid));
+int open_service(state_t * state, int lport, int rport) {
+	if(waitpid(*(state->cpid), &(state->status), WNOHANG) == 0) {
 		return 1;
 	}
 
@@ -53,7 +50,7 @@ int open_service(state_t * state, int rport, int lport) {
 	}
 
 	char pmap[25];
-	snprintf(pmap, 25, "%d:localhost:%d", rport, lport);
+	snprintf(pmap, 25, "%d:localhost:%d", lport, rport);
 
 	char* ssh_args[6] = {"/usr/bin/ssh", "-o ServerAliveInterval=300", "-NR", pmap, "oncoto@oncoto.app", NULL};
 	printf("/usr/bin/ssh -o \"ServerAliveInterval=300\" -fNR %s oncoto@oncoto.app\n", pmap);
@@ -71,7 +68,7 @@ void close_plex(int signum) {
 
 	printf("\t(SIGINT) [killing plex tunnel on macMini]\n");
 	//char* sshkill_args[3] = {"/home/magneto/services/hermes/ssh-send", "kill `(ps aux | grep \"ssh -C -NR 5001:localhost:32400 oncoto@oncoto.app\"| grep -v grep | awk '{print $2}')`", NULL};
-	char* sshkill_args[4] = {"/usr/bin/ssh", "guimaraes@macMini", "kill `(ps aux | grep ssh | grep 5001:localhost:32400 | grep oncoto@oncoto.app | grep -v grep | awk '{print $2}')`", NULL};
+	char* sshkill_args[4] = {"/usr/bin/ssh", "guimaraes@macMini", "kill `(ps aux | grep \"ssh -C -NR 5001:localhost:32400 oncoto@oncoto.app\"| grep -v grep | awk '{print $2}')`", NULL};
 	if( execv("/usr/bin/ssh", sshkill_args) == -1) {
 		fprintf(stderr, "failed to kill plex ssh tunnel on macMini... [%d]\n", errno);
 	}
@@ -139,7 +136,6 @@ int main() {
 	set_sock_timeout(socket_client, 10, 0, 0);	
    
 
-	// alexandria timer, state and thread -- this should not be a hardcoded config for each service
 	stimer_t atimer;
 	resettimer(&atimer);
 	int acpid = -1;
@@ -151,17 +147,6 @@ int main() {
 	pthread_t atimer_thr;
 	int atimer_thrd = pthread_create(&atimer_thr, NULL, timer_f, (void *) &astate);
 
-	// mstream timer, state and thread -- this should not be a hardcoded config for each service
-	stimer_t mtimer;
-	resettimer(&mtimer);
-	int mcpid = -1;
-	
-	state_t mstate;
-	mstate.cpid = &mcpid;
-	mstate.timer = &mtimer;
-
-	pthread_t mtimer_thr;
-	int mtimer_thrd = pthread_create(&mtimer_thr, NULL, timer_f, (void *) &mstate);
 
 	struct sigaction action;
     memset(&action, 0, sizeof(struct sigaction));
@@ -194,7 +179,9 @@ int main() {
 		
 		char read;
 		int bytes_received = recv(socket_client, &read, 1, 0);
+		printf("received: %c\n", read);
 		
+		int tcpid = -1;
 		if (bytes_received > 0) {
 			send(socket_client, &read, 1, 0);
 			switch (read) {
@@ -215,24 +202,14 @@ int main() {
 					//}
 					break;
 				}
-				case 'a': {
+				case 'a':
 					resettimer(&atimer);
 					open_service(&astate, 5000, 5000);
 					break;
-				}
-				case 'm': {
-					resettimer(&mtimer);
-					open_service(&mstate, 6300, 3000);
+				case 'm':
+					resettimer(&atimer);
+					open_service(&astate, 3000, 6300);
 					break;
-				}
-				case 's': {
-					printf("shutting down...\n");
-					char* _shutdown_args[3] = {"/usr/bin/shutdown", "now", NULL};
-					sync();
-					if( execv("/usr/bin/shutdown", _shutdown_args) == -1) {
-						fprintf(stderr, "failed to shutdown [%d]\n", errno);
-					}
-				}
 			}
 		}
 		CLOSESOCKET(socket_client);
@@ -240,9 +217,6 @@ int main() {
 	
 	if(waitpid(acpid, &(astate.status), WNOHANG) == 0) {
 		kill(acpid, SIGKILL);
-	}
-	if(waitpid(mcpid, &(mstate.status), WNOHANG) == 0) {
-		kill(mcpid, SIGKILL);
 	}
 
     CLOSESOCKET(socket_listen);
