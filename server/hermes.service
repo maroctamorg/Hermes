@@ -1,0 +1,17 @@
+[Unit]
+Description=Hermes Remote Gatekeeper
+After=network-online.target
+Wants=network-online.target systemd-networkd-wait-online.service systemd-resolved
+
+StartLimitIntervalSec=500
+StartLimitBurst=5
+
+[Service]
+User=magneto
+WorkingDirectory=/home/magneto/services/hermes
+ExecStart=/home/magneto/services/hermes/hermes
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
