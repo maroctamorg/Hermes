@@ -25,21 +25,6 @@
 #include <string.h>
 #include <ctype.h>
 
-
-void parse_c_str(char* buffer, int len, char* str, int str_len) {
-	if(len >= str_len) {
-		fprintf(stderr, "received string overflows c_str buffer, will be truncated\n");
-	}
-	for (int i = 0; i < len; i++) {
-		if(buffer[i] == '\0') {
-			len = i;
-			break;	
-		}
-		str[i] = buffer[i];
-	}	
-	str[len] = '\0';
-}
-
 int main() {
 
 	INITSOCKET();
@@ -108,12 +93,8 @@ int main() {
 			continue;
 		}
 		
-		char read[20];
-        int bytes_received = recv(socket_client, &read, 19, 0);
-	char received[20];
-	parse_c_str(read, bytes_received, received, 20);
-	// debug
-	printf("Received: %s\n", received);
+		char read;
+        int bytes_received = recv(socket_client, &read, 1, 0);
         if (bytes_received > 0) {
 			system("./wol.sh"); 
     	
@@ -136,9 +117,8 @@ int main() {
 				continue;
 			}
 
-			printf("Sending: %s/n", received);
-			send(socket_server, &received, 20, 0);
-			bytes_received = recv(socket_server, &received, 1, 0);
+			send(socket_server, "s", 1, 0);
+			bytes_received = recv(socket_server, &read, 1, 0);
 			if(bytes_received > 0) {
 				send(socket_client, "s", 1, 0);
 			}

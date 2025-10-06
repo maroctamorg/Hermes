@@ -1,5 +1,0 @@
-#!/bin/sh
-#CHOOSE 1 OF THE BELOW OPTIONS
-# - sudo etherwake -i eth0 ${MAC ADDRESS OF ETHERNET INTERFACE}
-# - wakeonlan -i ${IP SUBNET} ${MAC ADDRESS OF ETHERNET INTERFACE}
-
