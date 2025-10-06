@@ -23,7 +23,7 @@ short get_sock(SOCKET * sock, const char * PORT, int ai_family, int ai_socktype,
     // Configuring local address
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family	= ai_family		? ai_family		: AF_INET;
+	hints.ai_family		= ai_family		? ai_family		: AF_INET;
 	hints.ai_socktype	= ai_socktype	? ai_socktype	: SOCK_STREAM;
 	hints.ai_flags		= ai_flags		? ai_flags		: AI_PASSIVE;
 

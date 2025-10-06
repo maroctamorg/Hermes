@@ -10,4 +10,5 @@
 gateway/gateway
 gateway/wol.sh
 server/server
-
+nohup.out
+IPV*
