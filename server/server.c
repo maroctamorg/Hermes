@@ -40,12 +40,20 @@ typedef struct {
 } state_t;
 
 int open_service(state_t * state, int lport, int rport) {
-	if(waitpid(*(state->cpid), &(state->status), WNOHANG) == 0) {
-		return 1;
+  // debug
+  printf("received '%s': opening service\n", audiobookshelf);
+  // debug	
+
+  if(waitpid(*(state->cpid), &(state->status), WNOHANG) == 0) {
+	  // debug
+    printf("service already running, not opening another...\n"); 
+    // debug
+    //return 1;
 	}
 
 	*(state->cpid) = fork();
 	if(*(state->cpid) != 0) {
+    // parent process
 		return 1;
 	}
 
@@ -225,8 +233,6 @@ int main() {
 				open_service(&astate, 3000, 6300);
       }
       if(strncmp(read, audiobookshelf, strlen(audiobookshelf)) == 0) {
-        // debug
-        printf("received '%s': opening service\n", audiobookshelf);
 				resettimer(&atimer);
 				open_service(&astate, 5001, 5004);
 			}
