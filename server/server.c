@@ -41,7 +41,7 @@ typedef struct {
 
 int open_service(state_t * state, int lport, int rport) {
   // debug
-  printf("received '%s': opening service\n", audiobookshelf);
+  printf("opening service\n");
   // debug	
 
   if(waitpid(*(state->cpid), &(state->status), WNOHANG) == 0) {
