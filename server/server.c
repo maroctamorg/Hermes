@@ -145,7 +145,7 @@ int main() {
     }
 
 	// SERVER WILL RECEIVE ONLY FROM THIS ADDRESS
-	char * gateway_address = "18.125.5.100";
+	char * gateway_address = "147.182.138.3";
 	printf("Remote address is: %s\n", gateway_address);
     
 	SOCKET socket_client;
@@ -205,7 +205,7 @@ int main() {
 		int tcpid = -1;
 		if (bytes_received > 0) {
 			send(socket_client, &read, 1, 0);
-			if(strcmp(read, plex) == 0) {
+			if(strncmp(read, plex, strlen(plex)) == 0) {
 			  int status = 0;
 			  int pid = -1;
 			  pid = fork();
@@ -216,15 +216,15 @@ int main() {
 			  waitpid(pid, &status, 0);
 			  open_plex();
       }
-			if(strcmp(read, alexandria) == 0) {
+			if(strncmp(read, alexandria, strlen(alexandria)) == 0) {
 			  resettimer(&atimer);
 			  open_service(&astate, 5000, 5000);
       }
-			if(strcmp(read, mstream) == 0) {
+			if(strncmp(read, mstream, strlen(mstream)) == 0) {
 				resettimer(&atimer);
 				open_service(&astate, 3000, 6300);
       }
-      if(strcmp(read, audiobookshelf) == 0) {
+      if(strncmp(read, audiobookshelf, strlen(audiobookshelf)) == 0) {
         // debug
         printf("received '%s': opening service\n", audiobookshelf);
 				resettimer(&atimer);
